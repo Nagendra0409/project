@@ -28,6 +28,17 @@ jobs:
         run: npm build
         artifacts:
           path: dist
+          
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH keys
+        uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy to production
+        run: ./deploy.sh
            
       - name: Deploy to production
         uses: peaceiris/actions-gh-pages@v3
