@@ -8,27 +8,31 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up laravel.php
-        uses: actions/setup-node@v2
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
         with:
-          node-version: 14
+          PHP-version: 7.4  # Change this to the desired PHP version
 
-      - name: Install dependencies
-        run: npm install
-      
+      - name: Install Composer dependencies
+        run: composer install
+
       - name: Run tests
-        run: npm test
-      
+        run: php artisan test
+
       - name: Build artifact
-        run: npm build
-        artifacts:
-          path: dist
-          
+        run: npm run build  # Assuming you have npm configured in your Laravel project
+        working-directory: ./path/to/your/laravel/project
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -39,41 +43,33 @@ jobs:
 
       - name: Deploy to production
         run: ./deploy.sh
-           
-      - name: Deploy to production
+
+  deploy_gh_pages:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          
-jobss:
-  build:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Set up environment
-        env:
-          API_KEY: ${{ secrets.API_KEY }}
-        run: echo "Using API key: $API_KEY"
+          publish_dir: ./dist  # Update this path if necessary
 
-     
-       - name: Notify on failure
-        if: failure()
-        uses: actions/slack@v5
+  notify_failure:
+    needs:
+      - build
+      - deploy
+      - deploy_gh_pages
+    if: failure()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notify of failure
+        uses: rtCamp/action-slack-notify@v2
         with:
           status: ${{ job.status }}
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           slack-token: ${{ secrets.SLACK_TOKEN }}
-      
-           
-           
-           
-           
-           
-           
-           
-           
-           
-           
-           
-           
